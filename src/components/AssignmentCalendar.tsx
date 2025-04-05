@@ -77,19 +77,18 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
     const courseName = eventInfo.event.extendedProps.courseName;
     const courseId = eventInfo.event.extendedProps.courseId;
     const isMonthView = eventInfo.view.type === 'dayGridMonth';
-    const isTimeGridView = eventInfo.view.type.startsWith('timeGrid');
     
     return (
       <div className="event-content">
         <div className="event-marker"></div>
         <div className="event-details">
           <div className="event-title">{eventInfo.event.title}</div>
-          {(isTimeGridView || !isMonthView) && courseName && (
+          {!isMonthView && courseName && (
             <div className="event-course">
               {courseId} {courseName}
             </div>
           )}
-          {!isTimeGridView && <div className="event-time">{time}</div>}
+          <div className="event-time">{time}</div>
         </div>
       </div>
     );
@@ -107,8 +106,8 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
             Month
           </button>
           <button
-            onClick={() => handleViewChange('timeGridWeek')}
-            className={`toggle-btn ${activeView === 'timeGridWeek' ? 'active' : ''}`}
+            onClick={() => handleViewChange('dayGridWeek')}
+            className={`toggle-btn ${activeView === 'dayGridWeek' ? 'active' : ''}`}
           >
             Week
           </button>
@@ -152,21 +151,14 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
                 meridiem: 'short'
               }
             },
-            timeGridWeek: {
+            dayGridWeek: {
               titleFormat: { year: 'numeric', month: 'long' },
               dayHeaderFormat: { weekday: 'short', month: 'numeric', day: 'numeric' },
-              slotMinTime: '08:00:00',
-              slotMaxTime: '23:59:59',
-              slotDuration: '01:00:00',
-              slotLabelFormat: {
+              eventTimeFormat: {
                 hour: 'numeric',
                 minute: '2-digit',
-                meridiem: true
-              },
-              allDaySlot: true,
-              allDayText: 'All Day',
-              height: 800,
-              expandRows: true
+                meridiem: 'short'
+              }
             },
             timeGridDay: {
               titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
