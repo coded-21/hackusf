@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -22,6 +22,7 @@ interface AssignmentCalendarProps {
 
 export default function AssignmentCalendar({ assignments }: AssignmentCalendarProps) {
   const calendarRef = useRef<any>(null);
+  const [activeView, setActiveView] = useState('dayGridMonth');
 
   // Transform assignments into calendar events
   const events = assignments
@@ -29,6 +30,19 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
     .map(assignment => {
       const dueDate = new Date(assignment.due_at!);
       const courseId = assignment.course_id?.toString().padStart(6, '0') || '';
+      
+      // Format the time consistently for display
+      const formattedTime = dueDate.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+
+      // For midnight (00:00), adjust to show as 11:59 PM of previous day
+      if (dueDate.getHours() === 0 && dueDate.getMinutes() === 0) {
+        dueDate.setMinutes(dueDate.getMinutes() - 1);
+      }
+      
       return {
         id: assignment.id.toString(),
         title: assignment.name,
@@ -39,11 +53,7 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
         extendedProps: {
           courseName: assignment.courseName,
           courseId: courseId,
-          time: dueDate.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-          }),
+          time: formattedTime
         },
         classNames: ['assignment-event'],
       };
@@ -58,6 +68,7 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
     const calendarApi = calendarRef.current?.getApi();
     if (calendarApi) {
       calendarApi.changeView(viewType);
+      setActiveView(viewType);
     }
   };
 
@@ -66,18 +77,19 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
     const courseName = eventInfo.event.extendedProps.courseName;
     const courseId = eventInfo.event.extendedProps.courseId;
     const isMonthView = eventInfo.view.type === 'dayGridMonth';
+    const isTimeGridView = eventInfo.view.type.startsWith('timeGrid');
     
     return (
       <div className="event-content">
         <div className="event-marker"></div>
         <div className="event-details">
           <div className="event-title">{eventInfo.event.title}</div>
-          {!isMonthView && courseName && (
+          {(isTimeGridView || !isMonthView) && courseName && (
             <div className="event-course">
               {courseId} {courseName}
             </div>
           )}
-          <div className="event-time">{time}</div>
+          {!isTimeGridView && <div className="event-time">{time}</div>}
         </div>
       </div>
     );
@@ -90,25 +102,25 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
         <div className="view-toggles">
           <button
             onClick={() => handleViewChange('dayGridMonth')}
-            className="toggle-btn active"
+            className={`toggle-btn ${activeView === 'dayGridMonth' ? 'active' : ''}`}
           >
             Month
           </button>
           <button
             onClick={() => handleViewChange('timeGridWeek')}
-            className="toggle-btn"
+            className={`toggle-btn ${activeView === 'timeGridWeek' ? 'active' : ''}`}
           >
             Week
           </button>
           <button
             onClick={() => handleViewChange('timeGridDay')}
-            className="toggle-btn"
+            className={`toggle-btn ${activeView === 'timeGridDay' ? 'active' : ''}`}
           >
             Day
           </button>
           <button
             onClick={() => handleViewChange('listWeek')}
-            className="toggle-btn"
+            className={`toggle-btn ${activeView === 'listWeek' ? 'active' : ''}`}
           >
             List
           </button>
@@ -144,25 +156,33 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
               titleFormat: { year: 'numeric', month: 'long' },
               dayHeaderFormat: { weekday: 'short', month: 'numeric', day: 'numeric' },
               slotMinTime: '08:00:00',
-              slotMaxTime: '22:00:00',
+              slotMaxTime: '23:59:59',
               slotDuration: '01:00:00',
               slotLabelFormat: {
                 hour: 'numeric',
                 minute: '2-digit',
-                meridiem: 'short'
-              }
+                meridiem: true
+              },
+              allDaySlot: true,
+              allDayText: 'All Day',
+              height: 800,
+              expandRows: true
             },
             timeGridDay: {
               titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
               dayHeaderFormat: { weekday: 'long' },
               slotMinTime: '08:00:00',
-              slotMaxTime: '22:00:00',
+              slotMaxTime: '23:59:59',
               slotDuration: '01:00:00',
               slotLabelFormat: {
                 hour: 'numeric',
                 minute: '2-digit',
-                meridiem: 'short'
-              }
+                meridiem: true
+              },
+              allDaySlot: true,
+              allDayText: 'All Day',
+              height: 800,
+              expandRows: true
             },
             listWeek: {
               titleFormat: { year: 'numeric', month: 'long' },
