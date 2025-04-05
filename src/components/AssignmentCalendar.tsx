@@ -31,21 +31,23 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
       const dueDate = new Date(assignment.due_at!);
       const courseId = assignment.course_id?.toString().padStart(6, '0') || '';
       
-      // Set the time to 23:59 while preserving the date
+      // Create a date at 11:59 PM in the local timezone
       const adjustedDate = new Date(
-        dueDate.getFullYear(),
-        dueDate.getMonth(),
-        dueDate.getDate(),
-        23,
-        59,
-        0
+        Date.UTC(
+          dueDate.getFullYear(),
+          dueDate.getMonth(),
+          dueDate.getDate(),
+          23,
+          59,
+          0
+        )
       );
       
       return {
         id: assignment.id.toString(),
         title: assignment.name,
-        start: adjustedDate,
-        end: adjustedDate,
+        start: adjustedDate.toISOString(),
+        end: adjustedDate.toISOString(),
         allDay: false,
         url: assignment.html_url,
         extendedProps: {
