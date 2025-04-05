@@ -9,6 +9,13 @@ interface CanvasCourse {
   course_code: string;
   start_at: string | null;
   end_at: string | null;
+  enrollment_term_id: number;
+  term: {
+    id: number;
+    name: string;
+    start_at: string | null;
+    end_at: string | null;
+  };
 }
 
 interface CanvasAssignment {
