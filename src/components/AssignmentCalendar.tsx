@@ -31,29 +31,27 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
       const dueDate = new Date(assignment.due_at!);
       const courseId = assignment.course_id?.toString().padStart(6, '0') || '';
       
-      // Format the time consistently for display
-      const formattedTime = dueDate.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      });
-
-      // For midnight (00:00), adjust to show as 11:59 PM of previous day
-      if (dueDate.getHours() === 0 && dueDate.getMinutes() === 0) {
-        dueDate.setMinutes(dueDate.getMinutes() - 1);
-      }
+      // Set the time to 23:59 while preserving the date
+      const adjustedDate = new Date(
+        dueDate.getFullYear(),
+        dueDate.getMonth(),
+        dueDate.getDate(),
+        23,
+        59,
+        0
+      );
       
       return {
         id: assignment.id.toString(),
         title: assignment.name,
-        start: dueDate,
-        end: dueDate,
+        start: adjustedDate,
+        end: adjustedDate,
         allDay: false,
         url: assignment.html_url,
         extendedProps: {
           courseName: assignment.courseName,
           courseId: courseId,
-          time: formattedTime
+          time: '11:59 PM'
         },
         classNames: ['assignment-event'],
       };
@@ -77,13 +75,14 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
     const courseName = eventInfo.event.extendedProps.courseName;
     const courseId = eventInfo.event.extendedProps.courseId;
     const isMonthView = eventInfo.view.type === 'dayGridMonth';
+    const isListView = eventInfo.view.type === 'listWeek';
     
     return (
       <div className="event-content">
         <div className="event-marker"></div>
         <div className="event-details">
           <div className="event-title">{eventInfo.event.title}</div>
-          {!isMonthView && courseName && (
+          {!isMonthView && !isListView && courseName && (
             <div className="event-course">
               {courseId} {courseName}
             </div>
@@ -112,8 +111,8 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
             Week
           </button>
           <button
-            onClick={() => handleViewChange('timeGridDay')}
-            className={`toggle-btn ${activeView === 'timeGridDay' ? 'active' : ''}`}
+            onClick={() => handleViewChange('dayGridDay')}
+            className={`toggle-btn ${activeView === 'dayGridDay' ? 'active' : ''}`}
           >
             Day
           </button>
@@ -160,21 +159,14 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
                 meridiem: 'short'
               }
             },
-            timeGridDay: {
+            dayGridDay: {
               titleFormat: { year: 'numeric', month: 'long', day: 'numeric' },
               dayHeaderFormat: { weekday: 'long' },
-              slotMinTime: '08:00:00',
-              slotMaxTime: '23:59:59',
-              slotDuration: '01:00:00',
-              slotLabelFormat: {
+              eventTimeFormat: {
                 hour: 'numeric',
                 minute: '2-digit',
-                meridiem: true
-              },
-              allDaySlot: true,
-              allDayText: 'All Day',
-              height: 800,
-              expandRows: true
+                meridiem: 'short'
+              }
             },
             listWeek: {
               titleFormat: { year: 'numeric', month: 'long' },

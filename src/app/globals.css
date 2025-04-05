@@ -427,3 +427,47 @@
 .calendar-container .fc-timegrid-view .fc-scroller::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* Time Grid Day View Styles */
+.fc-timegrid-event-harness {
+  margin: 0 2px !important;
+}
+
+.fc-timegrid-event {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-left: 3px solid #6366f1 !important;
+  padding: 2px 4px !important;
+}
+
+.fc-timegrid-event .event-content {
+  height: 100%;
+  padding: 2px;
+}
+
+.fc-timegrid-event .event-details {
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.fc-timegrid-event .event-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+}
+
+.fc-timegrid-event .event-course {
+  font-size: 0.75rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.fc-timegrid-event .event-marker {
+  display: none;
+}
