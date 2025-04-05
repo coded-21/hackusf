@@ -40,7 +40,6 @@ interface Announcement {
 }
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [currentTerm, setCurrentTerm] = useState<Term | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -58,7 +57,6 @@ export default function Dashboard() {
           router.push('/auth/login');
           return;
         }
-        setUser(user);
 
         // Get Canvas credentials
         const { data: userData, error: userError } = await supabase
@@ -153,110 +151,86 @@ export default function Dashboard() {
     fetchData();
   }, [supabase, router]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/auth/login');
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex justify-center items-center min-h-screen">
         <div className="text-2xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold">Canvas Dashboard Pro</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/settings"
-                className="text-gray-600 hover:text-gray-900"
-              >
-                Settings
-              </Link>
-              <span className="text-gray-600">{user?.email}</span>
-              <button
-                onClick={handleSignOut}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
+    <>
+      {error && (
+        <div className="mb-6 rounded-md bg-red-50 p-4">
+          <div className="text-sm text-red-700">{error}</div>
         </div>
-      </nav>
+      )}
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {error && (
-          <div className="mb-6 rounded-md bg-red-50 p-4">
-            <div className="text-sm text-red-700">{error}</div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          {/* Courses */}
-          <div className="lg:col-span-1">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Current Term</h2>
-                <p className="text-sm text-gray-500 mb-4">{currentTerm?.name || 'No active term'}</p>
-                <h3 className="text-md font-medium text-gray-900 mb-3">Your Courses</h3>
-                <div className="space-y-3">
-                  {courses.length > 0 ? (
-                    courses.map(course => (
-                      <div
-                        key={course.id}
-                        className="p-3 bg-gray-50 rounded-md hover:bg-gray-100"
-                      >
-                        <h3 className="font-medium">{course.name}</h3>
-                        <p className="text-sm text-gray-500">{course.course_code}</p>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        {/* Courses */}
+        <div className="lg:col-span-1">
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-2">Current Term</h2>
+              <p className="text-sm text-gray-500 mb-4">{currentTerm?.name || 'No active term'}</p>
+              <h3 className="text-md font-medium text-gray-900 mb-3">Your Courses</h3>
+              <div className="space-y-3">
+                {courses.length > 0 ? (
+                  courses.map(course => (
+                    <div
+                      key={course.id}
+                      className="p-3 bg-gray-50 rounded-md hover:bg-gray-100"
+                    >
+                      <h3 className="font-medium">{course.name}</h3>
+                      <p className="text-sm text-gray-500">{course.course_code}</p>
+                      <div className="mt-2 flex space-x-2">
+                        <Link
+                          href={`/dashboard/${course.id}/files`}
+                          className="text-sm text-indigo-600 hover:text-indigo-800"
+                        >
+                          View Files
+                        </Link>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No courses found for the current term</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Announcements */}
-            <div className="bg-white overflow-hidden shadow rounded-lg mt-6">
-              <div className="p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Announcements</h2>
-                <div className="space-y-3">
-                  {announcements.length > 0 ? (
-                    announcements.map(announcement => (
-                      <div
-                        key={announcement.id}
-                        className="p-3 bg-gray-50 rounded-md hover:bg-gray-100"
-                      >
-                        <h3 className="font-medium">{announcement.title}</h3>
-                        <p className="text-sm text-gray-500">
-                          Posted: {new Date(announcement.posted_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No recent announcements</p>
-                  )}
-                </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No courses found for the current term</p>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Calendar */}
-          <div className="lg:col-span-3">
-            <AssignmentCalendar assignments={assignments} />
+          {/* Recent Announcements */}
+          <div className="bg-white overflow-hidden shadow rounded-lg mt-6">
+            <div className="p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Announcements</h2>
+              <div className="space-y-3">
+                {announcements.length > 0 ? (
+                  announcements.map(announcement => (
+                    <div
+                      key={announcement.id}
+                      className="p-3 bg-gray-50 rounded-md hover:bg-gray-100"
+                    >
+                      <h3 className="font-medium">{announcement.title}</h3>
+                      <p className="text-sm text-gray-500">
+                        Posted: {new Date(announcement.posted_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No recent announcements</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Calendar */}
+        <div className="lg:col-span-3">
+          <AssignmentCalendar assignments={assignments} />
+        </div>
+      </div>
+    </>
   );
 } 

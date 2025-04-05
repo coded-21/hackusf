@@ -36,6 +36,16 @@ interface CanvasAnnouncement {
   course_id: number;
 }
 
+interface CanvasFile {
+  id: string;
+  filename: string;
+  display_name: string;
+  url: string;
+  size: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export class CanvasAPI {
   private domain: string;
   private token: string;
@@ -85,6 +95,12 @@ export class CanvasAPI {
   async getCourseAnnouncements(courseId: number) {
     return this.fetch<CanvasAnnouncement[]>(
       `courses/${courseId}/announcements?per_page=10`
+    );
+  }
+
+  async getCourseFiles(courseId: number) {
+    return this.fetch<CanvasFile[]>(
+      `courses/${courseId}/files?per_page=100`
     );
   }
 
