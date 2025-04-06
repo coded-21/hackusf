@@ -69,6 +69,35 @@ export class CanvasAPI {
     this.token = config.token;
   }
 
+  /**
+   * Static method to create a CanvasAPI instance from user config
+   */
+  static async create(): Promise<CanvasAPI | null> {
+    try {
+      // Fetch user's Canvas configuration from API
+      const response = await fetch('/api/user/canvas-config', {
+        credentials: 'include' // Include authentication cookies
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to fetch Canvas configuration');
+        return null;
+      }
+      
+      const config = await response.json();
+      
+      if (!config || !config.domain || !config.token) {
+        console.error('Invalid Canvas configuration');
+        return null;
+      }
+      
+      return new CanvasAPI(config);
+    } catch (error) {
+      console.error('Error creating CanvasAPI:', error);
+      return null;
+    }
+  }
+
   private async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     try {
       console.log(`Fetching Canvas API endpoint: ${endpoint}`);
@@ -226,6 +255,24 @@ export class CanvasAPI {
     } catch (error) {
       console.error('Error fetching recent announcements:', error);
       return [];
+    }
+  }
+
+  /**
+   * Get details for a specific course
+   */
+  async getCourseDetails(courseId: string | number): Promise<CanvasCourse | null> {
+    try {
+      return await this.fetch<CanvasCourse>(`courses/${courseId}?include[]=term`);
+    } catch (error) {
+      console.error(`Error getting details for course ${courseId}:`, error);
+      
+      if (error instanceof CanvasApiError && error.statusCode === 404) {
+        // Course not found
+        return null;
+      }
+      
+      throw error;
     }
   }
 }

@@ -58,13 +58,9 @@ const FileContextPanel: FC<FileContextPanelProps> = ({
         </div>
         
         {/* Show the appropriate tool for selected files with content */}
-        {showSummarizer && file.content && (
+        {showSummarizer && file.content && !isPDF && (
           <div className="mt-2">
-            {isPDF ? (
-              <PDFDescriber file={file} />
-            ) : (
-              <FileSummarizer file={file} />
-            )}
+            <FileSummarizer file={file} />
           </div>
         )}
       </div>

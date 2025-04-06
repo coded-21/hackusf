@@ -145,8 +145,8 @@ const FileSummarizer: FC<FileSummarizerProps> = ({ file }) => {
     <div className="w-full">
       <Button 
         onClick={handleSummarize}
-        className={`w-full ${isPdf ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
-        disabled={isLoading}
+        className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+        disabled={isLoading || isPdf}
       >
         {isLoading ? (
           <>
@@ -158,14 +158,16 @@ const FileSummarizer: FC<FileSummarizerProps> = ({ file }) => {
         )}
       </Button>
       
-      {isPdf && !isLoading && !summary && !error && (
-        <div className="mt-2 text-xs text-amber-600 flex items-center">
-          <FileText className="h-3 w-3 mr-1" />
-          <span>PDF files are processed differently due to browser limitations</span>
+      {isPdf && (
+        <div className="text-xs text-gray-500 p-2 bg-blue-50 rounded border border-blue-100 mt-2 flex items-start">
+          <FileText className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0 text-blue-500" />
+          <span>
+            PDF content is being provided to the AI. Ask questions about this document directly in the chat.
+          </span>
         </div>
       )}
       
-      {error && (
+      {error && !isPdf && (
         <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
           <div className="flex justify-between items-center">
             <p>{error}</p>
@@ -185,9 +187,9 @@ const FileSummarizer: FC<FileSummarizerProps> = ({ file }) => {
         </div>
       )}
       
-      {summary && (
-        <div className={`mt-4 p-4 border rounded-md ${isPdfFallback ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
-          <h3 className={`font-semibold mb-2 ${isPdfFallback ? 'text-amber-800' : ''}`}>
+      {summary && !isPdf && (
+        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
+          <h3 className="font-semibold mb-2">
             Summary of {file.name}
           </h3>
           <div className="whitespace-pre-line text-sm">{summary}</div>

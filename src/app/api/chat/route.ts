@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { CanvasAPI } from '@/lib/canvas';
 
 // Initialize Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { messages, courseId } = await req.json();
+    const { messages, courseId, courseName } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
@@ -57,8 +58,28 @@ export async function POST(req: Request) {
       return true;
     });
 
+    // Get course name if not provided
+    let displayCourseName = courseName;
+    if (!displayCourseName) {
+      try {
+        // Try to get the course name from Canvas API
+        const canvasApi = await CanvasAPI.create();
+        if (canvasApi) {
+          const courseDetails = await canvasApi.getCourseDetails(courseId);
+          if (courseDetails && courseDetails.name) {
+            displayCourseName = courseDetails.name;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching course name:', error);
+      }
+    }
+
+    // Fallback to course ID if name couldn't be retrieved
+    const courseIdentifier = displayCourseName || `Course ${courseId}`;
+
     // Create the system message
-    const systemMessage = `You are a helpful AI course instructor assistant for course ${courseId}. 
+    const systemMessage = `You are a helpful AI course instructor assistant for ${courseIdentifier}. 
                           Your goal is to help students understand the course material and answer their questions.
                           Always be encouraging, supportive, and academically accurate.
                           
