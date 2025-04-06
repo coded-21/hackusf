@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardProvider } from '@/lib/DashboardContext';
 
@@ -13,7 +13,15 @@ export default function DashboardLayout({
 }) {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClientComponentClient();
+
+  // Keep track of the last visited path to maintain state during navigation
+  useEffect(() => {
+    if (pathname) {
+      localStorage.setItem('last_dashboard_path', pathname);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const checkAuth = async () => {

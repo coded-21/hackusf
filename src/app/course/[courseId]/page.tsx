@@ -105,6 +105,12 @@ const CoursePage: FC<PageProps> = ({ params }) => {
     }
   }, [courseName, loading]);
 
+  // Handle navigation back to dashboard with state preservation
+  const handleBackToDashboard = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // No action needed, the dashboard will now use cached data
+    // when navigating back from this page
+  };
+
   return (
     <div className="flex flex-col h-screen w-full">
       {/* Header */}
@@ -114,6 +120,7 @@ const CoursePage: FC<PageProps> = ({ params }) => {
           <Link 
             href="/dashboard" 
             className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            onClick={handleBackToDashboard}
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             <span className="font-medium">Dashboard</span>

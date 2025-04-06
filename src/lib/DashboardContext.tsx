@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { createCanvasAPI } from './canvas';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -42,6 +42,9 @@ interface DashboardData {
   lastFetched: number | null;
 }
 
+const CACHE_TIMEOUT = 15 * 60 * 1000; // Increase cache timeout to 15 minutes
+const STORAGE_KEY = 'dashboard_cache';
+
 interface DashboardContextType {
   data: DashboardData | null;
   loading: boolean;
@@ -58,13 +61,41 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const supabase = createClientComponentClient();
 
+  // Load cached data from localStorage on initial mount
+  useEffect(() => {
+    const loadCachedData = () => {
+      try {
+        const cachedDataJson = localStorage.getItem(STORAGE_KEY);
+        if (cachedDataJson) {
+          const cachedData = JSON.parse(cachedDataJson) as DashboardData;
+          
+          // Only use cached data if it's still valid (within cache timeout)
+          if (cachedData.lastFetched && Date.now() - cachedData.lastFetched < CACHE_TIMEOUT) {
+            setData(cachedData);
+            return true;
+          }
+        }
+        return false;
+      } catch (err) {
+        console.error('Error loading cached dashboard data:', err);
+        return false;
+      }
+    };
+    
+    loadCachedData();
+  }, []);
+
   const clearData = useCallback(() => {
     setData(null);
+    // Also clear from localStorage when explicitly cleared
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }, []);
 
   const fetchData = useCallback(async () => {
-    // If data exists and was fetched less than 5 minutes ago, use cached data
-    if (data && data.lastFetched && Date.now() - data.lastFetched < 5 * 60 * 1000) {
+    // If data exists and was fetched less than the cache timeout ago, use cached data
+    if (data && data.lastFetched && Date.now() - data.lastFetched < CACHE_TIMEOUT) {
       return;
     }
 
@@ -153,13 +184,25 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('dashboard_courses', JSON.stringify(storedCourses));
       }
 
-      setData({
+      const dashboardData = {
         courses: currentTermCourses,
         currentTerm: currentTermData,
         assignments: currentTermAssignments,
         announcements: currentTermAnnouncements,
         lastFetched: Date.now(),
-      });
+      };
+
+      // Store the entire dashboard data in localStorage for caching
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(dashboardData));
+        } catch (err) {
+          console.error('Error caching dashboard data:', err);
+          // If localStorage fails, continue without caching
+        }
+      }
+
+      setData(dashboardData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
