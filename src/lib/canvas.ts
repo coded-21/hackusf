@@ -37,13 +37,14 @@ interface CanvasAnnouncement {
 }
 
 interface CanvasFile {
-  id: string;
-  filename: string;
+  id: number;
   display_name: string;
+  filename: string;
   url: string;
   size: number;
   created_at: string;
   updated_at: string;
+  content_type: string;
 }
 
 export class CanvasAPI {

@@ -47,6 +47,12 @@ export default function Dashboard() {
                       <p className="text-sm text-gray-500">{course.course_code}</p>
                       <div className="mt-2 flex space-x-2">
                         <Link
+                          href={`/course/${course.id}`}
+                          className="text-sm text-indigo-600 hover:text-indigo-800"
+                        >
+                          Open Course
+                        </Link>
+                        <Link
                           href={`/dashboard/${course.id}/files`}
                           className="text-sm text-indigo-600 hover:text-indigo-800"
                         >
