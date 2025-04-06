@@ -3,8 +3,22 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+interface ApiResult {
+  success?: boolean;
+  status?: string;
+  error?: string;
+  text?: string;
+  data?: unknown;
+  pdfText?: string;
+  pdfInfo?: {
+    pageCount: number;
+    metadata: Record<string, unknown>;
+  };
+  [key: string]: unknown;
+}
+
 export default function TestPdfPage() {
-  const [apiResult, setApiResult] = useState<any>(null);
+  const [apiResult, setApiResult] = useState<ApiResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   

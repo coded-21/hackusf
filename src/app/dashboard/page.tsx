@@ -26,7 +26,13 @@ interface Term {
 interface DashboardData {
   courses: Course[];
   currentTerm: Term | null;
-  assignments: any[];
+  assignments: {
+    id: number;
+    name: string;
+    due_at: string | null;
+    course_id: number; 
+    html_url: string;
+  }[];
   announcements: Announcement[];
   lastFetched: number | null;
 }

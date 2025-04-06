@@ -32,7 +32,7 @@ module.exports = {
         },
         destructive: {
           DEFAULT: "var(--destructive)",
-          foreground: "oklch(0.970 0.014 13.940)",
+          foreground: "#ffffff",
         },
         muted: {
           DEFAULT: "var(--muted)",

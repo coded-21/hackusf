@@ -6,6 +6,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
+import { EventClickArg } from '@fullcalendar/core';
 
 interface Assignment {
   id: number;
@@ -21,7 +22,7 @@ interface AssignmentCalendarProps {
 }
 
 export default function AssignmentCalendar({ assignments }: AssignmentCalendarProps) {
-  const calendarRef = useRef<any>(null);
+  const calendarRef = useRef<FullCalendar>(null);
   const [activeView, setActiveView] = useState('dayGridMonth');
 
   // Transform assignments into calendar events
@@ -59,7 +60,7 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
       };
     });
 
-  const handleEventClick = (info: any) => {
+  const handleEventClick = (info: EventClickArg) => {
     info.jsEvent.preventDefault();
     window.open(info.event.url, '_blank');
   };
@@ -72,7 +73,21 @@ export default function AssignmentCalendar({ assignments }: AssignmentCalendarPr
     }
   };
 
-  const renderEventContent = (eventInfo: any) => {
+  interface EventContentArg {
+    event: {
+      title: string;
+      extendedProps: {
+        time: string;
+        courseName?: string;
+        courseId: string;
+      };
+    };
+    view: {
+      type: string;
+    };
+  }
+
+  const renderEventContent = (eventInfo: EventContentArg) => {
     const time = eventInfo.event.extendedProps.time;
     const courseName = eventInfo.event.extendedProps.courseName;
     const courseId = eventInfo.event.extendedProps.courseId;

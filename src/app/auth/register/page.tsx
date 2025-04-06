@@ -32,8 +32,8 @@ export default function Register() {
       // Show success message and redirect to login
       alert('Please check your email for verification link');
       router.push('/auth/login');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
