@@ -14,6 +14,12 @@ interface PageProps {
   }>;
 }
 
+interface StoredCourseInfo {
+  id: string;
+  name: string;
+  time: number;
+}
+
 const CoursePage: FC<PageProps> = ({ params }) => {
   const { courseId } = use(params);
   const [courseName, setCourseName] = useState<string>('');
@@ -21,11 +27,27 @@ const CoursePage: FC<PageProps> = ({ params }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch course details
+    // Try to get course name from localStorage first
     const fetchCourseDetails = async () => {
       try {
         setLoading(true);
-        // Get Canvas API instance
+        
+        // Check localStorage first
+        const storedCoursesJson = localStorage.getItem('dashboard_courses');
+        
+        if (storedCoursesJson) {
+          const storedCourses = JSON.parse(storedCoursesJson) as StoredCourseInfo[];
+          const matchingCourse = storedCourses.find(course => course.id.toString() === courseId.toString());
+          
+          if (matchingCourse) {
+            setCourseName(matchingCourse.name);
+            setError(null);
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // Fallback to API if not found in localStorage
         const canvasApi = await CanvasAPI.create();
         
         if (!canvasApi) {
@@ -37,6 +59,29 @@ const CoursePage: FC<PageProps> = ({ params }) => {
         
         if (courseDetails && courseDetails.name) {
           setCourseName(courseDetails.name);
+          
+          // Store in localStorage for future use
+          const courses: StoredCourseInfo[] = storedCoursesJson 
+            ? JSON.parse(storedCoursesJson) 
+            : [];
+            
+          // Add or update this course in localStorage
+          const existingIndex = courses.findIndex(c => c.id.toString() === courseId.toString());
+          if (existingIndex >= 0) {
+            courses[existingIndex] = { 
+              id: courseId.toString(), 
+              name: courseDetails.name,
+              time: Date.now()
+            };
+          } else {
+            courses.push({ 
+              id: courseId.toString(), 
+              name: courseDetails.name,
+              time: Date.now()
+            });
+          }
+          
+          localStorage.setItem('dashboard_courses', JSON.stringify(courses));
         }
         
         setError(null);
@@ -63,31 +108,46 @@ const CoursePage: FC<PageProps> = ({ params }) => {
   return (
     <div className="flex flex-col h-screen w-full">
       {/* Header */}
-      <header className="h-16 border-b bg-white flex items-center px-4 shrink-0">
-        <Link 
-          href="/dashboard" 
-          className="flex items-center text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          Back to Dashboard
-        </Link>
+      <header className="h-16 border-b bg-white shadow-sm flex items-center px-6 shrink-0">
+        {/* Back button - left aligned */}
+        <div className="w-48 flex items-center">
+          <Link 
+            href="/dashboard" 
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Dashboard</span>
+          </Link>
+        </div>
         
-        {/* Course Title */}
-        <div className="ml-4 flex-1">
+        {/* Course Title - centered */}
+        <div className="flex-1 flex justify-center items-center">
           {loading ? (
             <div className="flex items-center">
-              <span className="text-xl font-semibold">Loading Course</span>
-              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+              <div className="h-6 w-48 bg-gray-200 animate-pulse rounded"></div>
+              <Loader2 className="h-4 w-4 ml-2 animate-spin text-blue-500" />
             </div>
           ) : (
-            <h1 className="text-xl font-semibold truncate">{courseName || "Course Assistant"}</h1>
+            <div className="flex flex-col items-center">
+              <h1 className="text-lg font-semibold text-gray-500">Course Assistant</h1>
+              <h2 className="text-xl font-bold text-gray-900 truncate">
+                {courseName || "Untitled Course"}
+                {error && (
+                  <span className="ml-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
+                    Limited Data
+                  </span>
+                )}
+              </h2>
+            </div>
           )}
         </div>
         
-        {/* PDF File Notice */}
-        <div className="flex items-center text-amber-600 text-sm ml-2">
-          <Info className="h-4 w-4 mr-1" />
-          <span>PDF files are processed on the server</span>
+        {/* PDF File Notice - right aligned */}
+        <div className="w-48 flex justify-end">
+          <div className="flex-shrink-0 flex items-center text-amber-600 text-sm border border-amber-200 px-3 py-1.5 rounded-full bg-amber-50">
+            <Info className="h-4 w-4 mr-1.5 text-amber-500 flex-shrink-0" />
+            <span className="whitespace-nowrap">PDF files are processed on the server</span>
+          </div>
         </div>
       </header>
 

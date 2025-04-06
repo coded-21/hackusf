@@ -143,6 +143,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         )
       );
 
+      // Store courses in localStorage for future reference
+      if (typeof window !== 'undefined') {
+        const storedCourses = currentTermCourses.map(course => ({
+          id: course.id.toString(),
+          name: course.name,
+          time: Date.now()
+        }));
+        localStorage.setItem('dashboard_courses', JSON.stringify(storedCourses));
+      }
+
       setData({
         courses: currentTermCourses,
         currentTerm: currentTermData,

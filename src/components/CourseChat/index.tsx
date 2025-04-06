@@ -40,6 +40,18 @@ const CourseChat: FC<CourseChatProps> = ({ courseId, courseName = '' }) => {
     toast.success("Chat history cleared");
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSendMessage();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   useEffect(() => {
     const loadFiles = async () => {
       setIsLoadingFiles(true);
@@ -330,6 +342,98 @@ const CourseChat: FC<CourseChatProps> = ({ courseId, courseName = '' }) => {
   // Get count of files currently being processed
   const processingFileCount = processingFiles.size;
 
+  // Improve the message rendering with better styling
+  const renderMessage = (message: Message, index: number) => {
+    const isUser = message.role === 'user';
+    
+    return (
+      <div
+        key={index}
+        className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}
+      >
+        <div 
+          className={`
+            rounded-lg shadow-sm
+            ${isUser 
+              ? 'bg-blue-500 text-white ml-8 mr-0 max-w-[80%] px-4 py-3' 
+              : 'bg-white border border-gray-200 mr-8 ml-0 max-w-[85%] p-4'}
+          `}
+        >
+          {!isUser && (
+            <div className="prose prose-slate max-w-none">
+              {message.content.split('\n').map((paragraph, i) => {
+                // Check if paragraph is a list item
+                if (paragraph.trim().startsWith('•') || paragraph.trim().startsWith('-') || /^\d+\./.test(paragraph.trim())) {
+                  return <p key={i} className="mb-2">{paragraph}</p>;
+                }
+                
+                // Check if it's a code block
+                if (paragraph.trim().startsWith('```') || paragraph.trim().endsWith('```')) {
+                  return <pre key={i} className="bg-gray-100 p-2 rounded font-mono text-sm my-2">{paragraph.replace(/```/g, '')}</pre>;
+                }
+                
+                // Check for inline code
+                if (paragraph.includes('`')) {
+                  return (
+                    <p key={i} className="mb-2">
+                      {paragraph.split('`').map((part, j) => {
+                        return j % 2 === 0 
+                          ? part 
+                          : <code key={j} className="bg-gray-100 px-1 py-0.5 rounded font-mono text-sm">{part}</code>;
+                      })}
+                    </p>
+                  );
+                }
+                
+                // Bold text handling
+                if (paragraph.includes('**')) {
+                  return (
+                    <p key={i} className="mb-2">
+                      {paragraph.split('**').map((part, j) => {
+                        return j % 2 === 0 
+                          ? part 
+                          : <strong key={j}>{part}</strong>;
+                      })}
+                    </p>
+                  );
+                }
+                
+                // Italic text handling
+                if (paragraph.includes('*')) {
+                  return (
+                    <p key={i} className="mb-2">
+                      {paragraph.split('*').map((part, j) => {
+                        return j % 2 === 0 
+                          ? part 
+                          : <em key={j}>{part}</em>;
+                      })}
+                    </p>
+                  );
+                }
+                
+                // Regular paragraph
+                return paragraph.trim() ? <p key={i} className="mb-2 last:mb-0">{paragraph}</p> : <br key={i} />;
+              })}
+            </div>
+          )}
+          {isUser && <div className="text-white break-words">{message.content}</div>}
+        </div>
+      </div>
+    );
+  };
+
+  // Add a new component for the file count indicator at the bottom of the page
+  const FileContextStatus: FC<{selectedFiles: Set<string>}> = ({ selectedFiles }) => {
+    if (selectedFiles.size === 0) return null;
+    
+    return (
+      <div className="flex justify-center items-center py-2 border-t bg-gray-50 text-xs text-blue-600">
+        <FileText className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+        <span>Using {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''} as context</span>
+      </div>
+    );
+  };
+
   // Render error state if there's an error
   if (error) {
     return (
@@ -364,15 +468,7 @@ const CourseChat: FC<CourseChatProps> = ({ courseId, courseName = '' }) => {
   return (
     <div className="flex h-[calc(100vh-4rem)] w-full">
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col min-w-0 max-w-[calc(100%-16rem)]">
-        {/* PDF processing info message */}
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-end">
-          <div className="flex items-center text-amber-700 text-xs">
-            <FileText size={12} className="mr-1" />
-            <span>PDF files are processed on the server</span>
-          </div>
-        </div>
-        
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Messages container */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Reset button - only visible when there are messages */}
@@ -396,168 +492,96 @@ const CourseChat: FC<CourseChatProps> = ({ courseId, courseName = '' }) => {
                 <div className="text-sm">
                   <p>Examples:</p>
                   <ul className="mt-2 space-y-2">
-                    <li>"Can you explain the concept of pipelining from Lecture 2.1?"</li>
-                    <li>"What are the key points about RISC-V registers?"</li>
-                    <li>"Summarize Chapter 5 about memory systems."</li>
-                    <li>"Help me understand the formulas in the Formula List PDF."</li>
+                    <li className="p-2 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer">"Can you explain the concept of pipelining from Lecture 2.1?"</li>
+                    <li className="p-2 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer">"What are the key points about RISC-V registers?"</li>
+                    <li className="p-2 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer">"Summarize Chapter 5 about memory systems."</li>
+                    <li className="p-2 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer">"Help me understand the formulas in the Formula List PDF."</li>
                   </ul>
                 </div>
               </div>
             </div>
           ) : (
-            messages.filter(msg => msg.role !== 'system').map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-lg p-4 ${
-                    message.role === 'user'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100'
-                  }`}
-                >
-                  {message.role === 'assistant' ? (
-                    <div className="prose prose-sm max-w-none prose-pre:bg-gray-200 prose-pre:p-2 prose-pre:rounded prose-headings:text-gray-800 prose-strong:font-semibold">
-                      {message.content.split('\n').map((line, i) => {
-                        // Check if line starts with special formatting
-                        const isListItem = /^\s*[-•*]\s/.test(line) || /^\s*\d+\.\s/.test(line);
-                        const isHeading = /^#{1,6}\s/.test(line);
-                        const isCodeBlock = /^\s*```/.test(line);
-                        
-                        // Process text with Markdown and technical formatting
-                        const processText = (text: string): string => {
-                          // Handle various markdown formatting
-                          let processedText = text;
-                          
-                          // Bold: **text**
-                          processedText = processedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                          
-                          // Italic: *text* or _text_
-                          processedText = processedText.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
-                          
-                          // Inline code: `code`
-                          processedText = processedText.replace(/`([^`]+)`/g, '<code class="bg-gray-200 px-1 rounded font-mono text-sm">$1</code>');
-                          
-                          // Handle technical terms like register names
-                          processedText = processedText.replace(/\b([xasft][0-9]{1,2}|zero|ra|sp|gp|tp|fp)\b/g, 
-                            (match: string) => `<span class="font-mono bg-gray-200 px-1 rounded">${match}</span>`);
-                          
-                          return processedText;
-                        };
-                        
-                        // Improved detection for asterisks to prevent conflicts with bold
-                        if (line.trim().startsWith('**') && !line.trim().startsWith('***')) {
-                          // This is likely a bold text starting with '**', not a list item
-                          return <p key={i} className="mb-2 last:mb-0" dangerouslySetInnerHTML={{ 
-                            __html: processText(line) 
-                          }} />;
-                        }
-
-                        if (isListItem) {
-                          // Process the line content, removing the list marker
-                          const content = line.replace(/^\s*[-•*]\s/, '').replace(/^\s*\d+\.\s/, '');
-                          return <li key={i} className="ml-4" dangerouslySetInnerHTML={{ 
-                            __html: processText(content) 
-                          }} />;
-                        } else if (isHeading) {
-                          const level = line.match(/^(#+)\s/)?.[1].length || 1;
-                          const text = line.replace(/^#+\s/, '');
-                          
-                          const formattedText = processText(text);
-                          
-                          switch(level) {
-                            case 1: return <h3 key={i} className="text-lg font-bold mt-3 mb-2" dangerouslySetInnerHTML={{ __html: formattedText }} />;
-                            case 2: return <h4 key={i} className="text-md font-semibold mt-3 mb-1" dangerouslySetInnerHTML={{ __html: formattedText }} />;
-                            default: return <h5 key={i} className="text-sm font-medium mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedText }} />;
-                          }
-                        } else if (isCodeBlock) {
-                          // Simple code block detection - not perfect but good enough for this context
-                          return <pre key={i} className="bg-gray-200 p-2 rounded font-mono text-xs mt-2 mb-3">{line.replace(/```(\w+)?/, '')}</pre>;
-                        } else if (!line.trim()) {
-                          return <div key={i} className="h-2"></div>; // Empty line as spacing
-                        } else {
-                          return <p key={i} className="mb-2 last:mb-0" dangerouslySetInnerHTML={{ 
-                            __html: processText(line) 
-                          }} />;
-                        }
-                      })}
-                    </div>
-                  ) : (
-                    message.content
-                  )}
+            <div className="space-y-4 p-2">
+              {messages.map(renderMessage)}
+              <div ref={messagesEndRef} />
+              {isLoading && (
+                <div className="flex items-center justify-center py-4">
+                  <div className="flex items-center text-gray-500 bg-white p-3 rounded-lg shadow-sm">
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin text-blue-500" />
+                    <span>Thinking...</span>
+                  </div>
                 </div>
-              </div>
-            ))
+              )}
+            </div>
           )}
-          <div ref={messagesEndRef} />
         </div>
 
-        {/* Input container - fixed at bottom */}
-        <div className="border-t bg-white p-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
+        {/* File context indicator */}
+        {selectedFiles.size > 0 && (
+          <FileContextStatus selectedFiles={selectedFiles} />
+        )}
+
+        {/* Input area */}
+        <div className="p-4 border-t bg-white">
+          <form onSubmit={handleFormSubmit} className="flex items-start gap-2">
+            <div className="relative flex-1">
+              <textarea
+                id="chat-input"
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
                   if (isDuplicateWarning) setIsDuplicateWarning(false);
                 }}
-                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                 placeholder="Ask a question about your course materials..."
-                className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base ${
-                  isDuplicateWarning ? 'border-amber-400 bg-amber-50' : ''
-                }`}
+                className={`
+                  w-full p-3 border rounded-lg resize-none
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  text-base min-h-[60px] max-h-[200px]
+                  ${isDuplicateWarning ? 'border-amber-400 bg-amber-50' : 'border-gray-300 bg-white'}
+                `}
+                rows={1}
+                onKeyDown={handleKeyDown}
                 disabled={isLoading}
               />
-              <button
-                onClick={handleSendMessage}
-                disabled={isLoading}
-                className="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
-              >
-                <Send size={20} />
-              </button>
+              
+              {/* Processing files indicator */}
+              {processingFileCount > 0 && (
+                <div className="absolute right-3 bottom-3 flex items-center text-amber-600 text-xs">
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  <span>Processing...</span>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between items-center mt-2">
-              <div className="text-xs text-gray-500">
-                {processingFileCount > 0 && (
-                  <span className="flex items-center text-amber-600">
-                    <Loader2 size={12} className="animate-spin mr-1" />
-                    Processing {processingFileCount} file(s)...
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 text-right">
-                {files.length === 0 ? (
-                  <span className="text-amber-600">
-                    No course files found. 
-                  </span>
-                ) : selectedFiles.size > 0 ? (
-                  <span className="flex items-center">
-                    <FileText size={12} className="mr-1" />
-                    Using context from {selectedFiles.size} selected file(s)
-                  </span>
-                ) : (
-                  'Select course materials from the right panel to include as context'
-                )}
-              </div>
-            </div>
-          </div>
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className={`
+                p-3 rounded-lg text-white self-stretch
+                flex items-center justify-center w-12
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+                disabled:cursor-not-allowed transition-colors
+                ${isLoading 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-500 hover:bg-blue-600'}
+              `}
+            >
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
+            </button>
+          </form>
         </div>
       </div>
 
-      {/* File context panel - fixed to right */}
-      <div className="w-64 border-l bg-gray-50">
-        <FileContextPanel
-          files={files}
-          onToggleFile={handleToggleFile}
-          selectedFiles={selectedFiles}
-          processingFiles={processingFiles}
-        />
-      </div>
+      {/* File context panel */}
+      <FileContextPanel
+        files={files}
+        onToggleFile={handleToggleFile}
+        selectedFiles={selectedFiles}
+        processingFiles={processingFiles}
+      />
     </div>
   );
 };
