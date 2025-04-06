@@ -46,19 +46,29 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-gray-100">
         <nav className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex items-center">
-                <Link href="/dashboard" className="text-xl font-semibold">
-                  Canvas Dashboard Pro
-                </Link>
-              </div>
+            <div className="flex justify-between items-center h-16">
+              {/* Left section - Canvas Token only */}
               <div className="flex items-center space-x-4">
                 <Link
-                  href="/settings"
-                  className="text-gray-600 hover:text-gray-900"
+                  href="/settings#canvas-token"
+                  className="text-gray-600 hover:text-gray-900 flex items-center"
                 >
-                  Settings
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  Canvas Token
                 </Link>
+              </div>
+              
+              {/* Center section - Logo */}
+              <div className="flex items-center absolute left-1/2 transform -translate-x-1/2">
+                <Link href="/dashboard" className="text-xl font-semibold">
+                  Canv<span className="text-indigo-600">AI</span>
+                </Link>
+              </div>
+              
+              {/* Right section - User info & Sign out */}
+              <div className="flex items-center space-x-4">
                 <span className="text-gray-600">{user?.email}</span>
                 <button
                   onClick={handleSignOut}

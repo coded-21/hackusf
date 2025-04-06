@@ -172,7 +172,7 @@ export default function Settings() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-2xl font-semibold mb-6">Canvas Integration Settings</h2>
+            <h2 className="text-2xl font-semibold mb-6">Canvas Token Settings</h2>
             <form onSubmit={handleSave} className="space-y-6">
               {error && (
                 <div className="rounded-md bg-red-50 p-4">
@@ -201,7 +201,7 @@ export default function Settings() {
                   For USF students, use: https://usflearn.instructure.com
                 </p>
               </div>
-              <div>
+              <div id="canvas-token">
                 <label htmlFor="canvasToken" className="block text-sm font-medium text-gray-700">
                   Canvas API Token
                 </label>

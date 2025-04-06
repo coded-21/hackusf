@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Canvas Dashboard Pro",
+  title: "CanvAI",
   description: "A better Canvas experience for students",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };

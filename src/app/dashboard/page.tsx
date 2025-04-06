@@ -158,7 +158,15 @@ function DashboardContent({ data, error }: { data: DashboardData | null, error: 
           <div className="bg-white overflow-hidden shadow-md rounded-lg border border-gray-100">
             <div className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Current Term</h2>
-              <p className="text-sm text-gray-500 mb-4">{data?.currentTerm?.name || 'No active term'}</p>
+              <p className="text-sm text-gray-500 mb-4">
+                {data?.currentTerm?.name || 'No active term'} 
+                <Link href="/settings#canvas-token" className="ml-2 text-indigo-600 hover:text-indigo-800 text-xs inline-flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  Canvas Token
+                </Link>
+              </p>
               <h3 className="text-md font-medium text-gray-900 mb-3">Your Courses</h3>
               <div className="space-y-4">
                 {data?.courses && data.courses.length > 0 ? (
@@ -172,7 +180,7 @@ function DashboardContent({ data, error }: { data: DashboardData | null, error: 
                         <div className="absolute backface-hidden w-full h-full p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
                           <h3 className="font-semibold text-gray-800">{course.name}</h3>
                           <p className="text-sm text-gray-500 mt-1">{course.course_code}</p>
-                          <div className="mt-3 text-xs text-gray-400">Hover to see options</div>
+                          <div className="mt-3 text-xs text-indigo-600 font-medium">Hover to see options</div>
                         </div>
                         
                         {/* Back of card */}

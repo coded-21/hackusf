@@ -1,4 +1,4 @@
-# 🎓 Canvas Dashboard Pro - Hackathon Project
+# 🎓 CanvAI - Hackathon Project
 
 ## 🎯 Project Vision
 Build an intelligent, feature-rich Canvas LMS dashboard that transforms how students manage their academic life. The app will combine real-time Canvas data with AI assistance to create a powerful learning companion.

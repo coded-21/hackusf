@@ -99,9 +99,9 @@ const CoursePage: FC<PageProps> = ({ params }) => {
   useEffect(() => {
     // Update document title when course name changes
     if (courseName) {
-      document.title = `${courseName} - Course Assistant`;
+      document.title = `${courseName} - CanvAI`;
     } else if (!loading) {
-      document.title = 'Course Assistant';
+      document.title = 'CanvAI';
     }
   }, [courseName, loading]);
 
@@ -136,7 +136,7 @@ const CoursePage: FC<PageProps> = ({ params }) => {
             </div>
           ) : (
             <div className="flex flex-col items-center">
-              <h1 className="text-lg font-semibold text-gray-500">Course Assistant</h1>
+              <h1 className="text-lg font-semibold text-gray-500">Canv<span className="text-indigo-600">AI</span></h1>
               <h2 className="text-xl font-bold text-gray-900 truncate">
                 {courseName || "Untitled Course"}
                 {error && (
