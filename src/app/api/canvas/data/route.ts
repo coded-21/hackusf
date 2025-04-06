@@ -1,84 +1,72 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { getUserCanvasConfig } from '../../user/canvas-config';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
-async function fetchFromCanvas(domain: string, token: string, endpoint: string) {
-  const url = `${domain}/api/v1/${endpoint}`;
-  console.log('Fetching from Canvas:', url);
+export async function POST(req: Request) {
+  // Verify authentication
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const { data: { session } } = await supabase.auth.getSession();
 
-  const response = await fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error('Invalid Canvas API token');
-    } else if (response.status === 404) {
-      throw new Error('Resource not found');
-    }
-    throw new Error(`Canvas API error: ${response.statusText}`);
+  if (!session) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
   }
 
-  return response.json();
-}
-
-export async function POST(request: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const { endpoint } = await req.json();
 
-    // Get user's Canvas settings
-    const { data: userData, error: settingsError } = await supabase
-      .from('users')
-      .select('canvas_token, canvas_domain')
-      .eq('id', user.id)
-      .single();
-
-    if (settingsError) {
-      console.error('Error fetching user settings:', settingsError);
-      return NextResponse.json(
-        { error: 'Failed to fetch Canvas settings' },
-        { status: 500 }
-      );
-    }
-
-    if (!userData?.canvas_token || !userData?.canvas_domain) {
-      return NextResponse.json(
-        { error: 'Canvas settings not configured' },
-        { status: 400 }
-      );
-    }
-
-    // Get the endpoint from request body
-    const { endpoint } = await request.json();
     if (!endpoint) {
+      return NextResponse.json({ error: 'Endpoint is required' }, { status: 400 });
+    }
+
+    // Get the user's Canvas config
+    const userCanvasConfig = await getUserCanvasConfig(session.user.id);
+    
+    if (!userCanvasConfig) {
       return NextResponse.json(
-        { error: 'No endpoint specified' },
-        { status: 400 }
+        { error: 'Canvas configuration not found. Please set up your Canvas integration.' },
+        { status: 404 }
       );
     }
 
+    // Construct the Canvas API URL
+    const url = `${userCanvasConfig.domain}/api/v1/${endpoint}`;
+    
     // Make the Canvas API request
-    const data = await fetchFromCanvas(
-      userData.canvas_domain,
-      userData.canvas_token,
-      endpoint
-    );
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${userCanvasConfig.token}`,
+        'Accept': 'application/json',
+      },
+    });
 
+    if (!response.ok) {
+      const errorCode = response.status;
+      let errorMessage = `Canvas API error: ${response.statusText}`;
+      
+      // Try to get more detailed error message
+      try {
+        const errorData = await response.json();
+        if (errorData && errorData.errors) {
+          errorMessage = errorData.errors.map((err: any) => err.message).join(', ');
+        }
+      } catch (e) {
+        // If we can't parse the error response, just use the status text
+      }
+      
+      return NextResponse.json({ error: errorMessage }, { status: errorCode });
+    }
+
+    const data = await response.json();
     return NextResponse.json({ data });
-  } catch (error: any) {
-    console.error('Error in Canvas API route:', error);
+  } catch (error) {
+    console.error('Error in Canvas API proxy:', error);
     return NextResponse.json(
-      { error: error.message || 'An unexpected error occurred' },
+      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
       { status: 500 }
     );
   }

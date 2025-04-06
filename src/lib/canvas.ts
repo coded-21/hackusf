@@ -47,6 +47,19 @@ interface CanvasFile {
   content_type: string;
 }
 
+/**
+ * Custom error class for Canvas API errors
+ */
+export class CanvasApiError extends Error {
+  public statusCode?: number;
+  
+  constructor(message: string, statusCode?: number) {
+    super(message);
+    this.name = 'CanvasApiError';
+    this.statusCode = statusCode;
+  }
+}
+
 export class CanvasAPI {
   private domain: string;
   private token: string;
@@ -58,24 +71,50 @@ export class CanvasAPI {
 
   private async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     try {
+      console.log(`Fetching Canvas API endpoint: ${endpoint}`);
       const response = await fetch('/api/canvas/data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ endpoint }),
+        credentials: 'include', // Include authentication cookies
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch Canvas data');
+        const errorMessage = error.error || 'Failed to fetch Canvas data';
+        
+        // Handle specific error cases
+        if (response.status === 401) {
+          throw new CanvasApiError('Authentication required. Please sign in again.', 401);
+        }
+        
+        if (errorMessage.includes('Resource not found')) {
+          throw new CanvasApiError(`Resource not found: ${endpoint}`, 404);
+        }
+        
+        if (errorMessage.includes('Invalid Canvas API token')) {
+          throw new CanvasApiError('Invalid Canvas API token. Please check your Canvas settings.', 401);
+        }
+        
+        throw new CanvasApiError(errorMessage, response.status);
       }
 
       const { data } = await response.json();
       return data;
     } catch (error: any) {
       console.error('Error fetching from Canvas:', error);
-      throw new Error('Unable to connect to Canvas. Please check your network connection and Canvas URL.');
+      
+      // If it's already a CanvasApiError, just re-throw it
+      if (error instanceof CanvasApiError) {
+        throw error;
+      }
+      
+      // Otherwise, create a new CanvasApiError
+      throw new CanvasApiError(
+        error.message || 'Unable to connect to Canvas. Please check your network connection and Canvas URL.'
+      );
     }
   }
 
@@ -100,9 +139,17 @@ export class CanvasAPI {
   }
 
   async getCourseFiles(courseId: number) {
-    return this.fetch<CanvasFile[]>(
-      `courses/${courseId}/files?per_page=100`
-    );
+    try {
+      return await this.fetch<CanvasFile[]>(
+        `courses/${courseId}/files?per_page=100`
+      );
+    } catch (error) {
+      if (error instanceof CanvasApiError && error.statusCode === 404) {
+        // Provide more context for course not found errors
+        throw new CanvasApiError(`Course ${courseId} not found or you don't have permission to access it.`, 404);
+      }
+      throw error;
+    }
   }
 
   async getUpcomingAssignments() {
@@ -116,7 +163,7 @@ export class CanvasAPI {
             courseName: course.name // Add course name to each assignment
           }));
         } catch (error) {
-          console.log(`Skipping assignments for course ${course.name} (${course.id}): ${error.message}`);
+          console.log(`Skipping assignments for course ${course.name} (${course.id}): ${error instanceof Error ? error.message : 'Unknown error'}`);
           return [];
         }
       });
@@ -159,7 +206,7 @@ export class CanvasAPI {
             courseName: course.name // Add course name to each announcement
           }));
         } catch (error) {
-          console.log(`Skipping announcements for course ${course.name} (${course.id}): ${error.message}`);
+          console.log(`Skipping announcements for course ${course.name} (${course.id}): ${error instanceof Error ? error.message : 'Unknown error'}`);
           return [];
         }
       });
