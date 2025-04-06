@@ -4,14 +4,17 @@ import { FC } from 'react';
 import CourseChat from '@/components/CourseChat';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { use } from 'react';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     courseId: string;
-  };
+  }>;
 }
 
 const CoursePage: FC<PageProps> = ({ params }) => {
+  const { courseId } = use(params);
+
   return (
     <div className="flex flex-col h-screen w-full">
       {/* Header */}
@@ -28,7 +31,7 @@ const CoursePage: FC<PageProps> = ({ params }) => {
 
       {/* Main content */}
       <main className="flex-1 overflow-hidden">
-        <CourseChat courseId={params.courseId} />
+        <CourseChat courseId={courseId} />
       </main>
     </div>
   );
